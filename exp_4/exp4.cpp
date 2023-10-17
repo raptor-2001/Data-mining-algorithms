@@ -64,7 +64,7 @@ double computeInformationGain(map<string, int> &parentCounts, map<string, map<st
 
 int main()
 {
-    ifstream file("exp3_input.csv");
+    ifstream file("info-gain.csv");
 
     string line, day, level, routine, playGame, value;
     map<string, int> parentCounts;
