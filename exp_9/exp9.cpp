@@ -71,8 +71,8 @@ void writeCorrelationCoefficient(const string &filename, float corr_coeff)
 
 int main()
 {
-    string inputFileName = "exp8_input.csv";
-    string outputFileName = "exp8_output.csv";
+    string inputFileName = "correlation_input.csv";
+    string outputFileName = "correlation_output.csv";
 
     vector<int> a = readData(inputFileName);
     vector<int> b = readData(inputFileName);
