@@ -14,8 +14,8 @@ struct CellData
 };
 
 // Function to read data from the input CSV file into the provided data structures
-void readData(const string &filename, map<string, map<string, CellData>> &cellData,
-              map<string, int> &columnTotal, map<string, int> &rowTotal)
+void readCSV(const string &filename, map<string, map<string, CellData>> &cellData,
+             map<string, int> &columnTotal, map<string, int> &rowTotal)
 {
     fstream file(filename, ios::in);
     if (!file.is_open())
@@ -24,7 +24,7 @@ void readData(const string &filename, map<string, map<string, CellData>> &cellDa
         return;
     }
 
-    string line, row, col, count;
+    string line, rowHeader, colHeader, count;
     int val;
 
     int lineNumber = 0;
@@ -39,21 +39,21 @@ void readData(const string &filename, map<string, map<string, CellData>> &cellDa
             continue; // Skip the header line
         }
 
-        getline(str, row, ',');
-        getline(str, col, ',');
+        getline(str, rowHeader, ',');
+        getline(str, colHeader, ',');
         getline(str, count, ',');
 
         val = stoi(count);
 
-        cellData[row][col].count += val;
-        columnTotal[col] += val;
-        rowTotal[row] += val;
+        cellData[rowHeader][colHeader].count += val;
+        columnTotal[colHeader] += val;
+        rowTotal[rowHeader] += val;
     }
 }
 
 // Function to write the result to an output CSV file
-void writeResult(const string &filename, const map<string, map<string, CellData>> &cellData,
-                 const map<string, int> &columnTotal, const map<string, int> &rowTotal)
+void writeCSV(const string &filename, const map<string, map<string, CellData>> &cellData,
+              const map<string, int> &columnTotal, const map<string, int> &rowTotal)
 {
     ofstream fw(filename, ios::out);
 
@@ -96,8 +96,8 @@ int main()
     map<string, int> columnTotal;
     map<string, int> rowTotal;
 
-    readData("t-d-weight-input.csv", cellData, columnTotal, rowTotal);
-    writeResult("t-d-weight-output.csv", cellData, columnTotal, rowTotal);
+    readCSV("t-d-weight-input.csv", cellData, columnTotal, rowTotal);
+    writeCSV("t-d-weight-output.csv", cellData, columnTotal, rowTotal);
 
     cout << "Processing complete. Results saved to 't-d-weight-output.csv'." << endl;
 
