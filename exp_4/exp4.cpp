@@ -33,8 +33,11 @@ double calculateEntropy(int positive, int negative)
 // Function to compute information gain
 double computeInformationGain(map<string, int> &parentCounts, map<string, map<string, int>> &childCounts)
 {
-    double positiveParent = parentCounts["Yes"];
-    double negativeParent = parentCounts["No"];
+    double positiveParent = parentCounts["yes"];
+    double negativeParent = parentCounts["no"];
+
+    // cout << positiveParent << " " << negativeParent << endl;
+
     double totalParent = positiveParent + negativeParent;
 
     double parentEntropy = calculateEntropy(positiveParent, negativeParent);
@@ -45,8 +48,8 @@ double computeInformationGain(map<string, int> &parentCounts, map<string, map<st
     for (auto it = childCounts.begin(); it != childCounts.end(); ++it)
     {
         string childName = it->first;
-        double positiveChild = it->second["Yes"];
-        double negativeChild = it->second["No"];
+        double positiveChild = it->second["yes"];
+        double negativeChild = it->second["no"];
         double totalChild = positiveChild + negativeChild;
 
         double childEntropyPart = calculateEntropy(positiveChild, negativeChild);
@@ -66,7 +69,7 @@ int main()
 {
     ifstream file("info-gain.csv");
 
-    string line, day, level, routine, playGame, value;
+    string line, outlook, tempNum, tempNom, play, windy, humidNum, humidNom;
     map<string, int> parentCounts;
     map<string, map<string, int>> childCounts;
 
@@ -83,11 +86,13 @@ int main()
     while (getline(file, line))
     {
         stringstream str(line);
-        getline(str, day, ',');
-        getline(str, level, ',');
-        getline(str, routine, ',');
-        getline(str, playGame, ',');
-        getline(str, value, ',');
+        getline(str, outlook, ',');
+        getline(str, tempNum, ',');
+        getline(str, tempNom, ',');
+        getline(str, humidNum, ',');
+        getline(str, humidNom, ',');
+        getline(str, windy, ',');
+        getline(str, play, ',');
 
         if (i == 0)
         {
@@ -100,28 +105,34 @@ int main()
         switch (choice)
         {
         case 1:
-            childName = day;
+            childName = outlook;
             break;
 
         case 2:
-            childName = level;
+            childName = tempNum;
             break;
 
         case 3:
-            childName = routine;
+            childName = tempNom;
             break;
 
         case 4:
-            childName = value;
+            childName = humidNum;
+            break;
+        case 5:
+            childName = humidNom;
+            break;
+        case 6:
+            childName = windy;
             break;
 
         default:
-            childName = routine;
+            childName = tempNom;
             break;
         }
 
-        parentCounts[playGame]++;
-        childCounts[childName][playGame]++;
+        parentCounts[play]++;
+        childCounts[childName][play]++;
     }
 
     double informationGain = computeInformationGain(parentCounts, childCounts);
