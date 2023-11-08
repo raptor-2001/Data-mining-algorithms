@@ -1,11 +1,15 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <string>
 #include <sstream>
+#include <climits>
+#include <cmath>
 
 using namespace std;
 
-vector<int> readData(const string &filename)
+// Function to read CSV data from a file and return it as a vector of vectors of strings
+vector<int> readCSV(const string &filename)
 {
     vector<int> data;
     fstream file(filename, ios::in);
@@ -34,7 +38,23 @@ vector<int> readData(const string &filename)
     return data;
 }
 
-float calculateCorrelationCoefficient(const vector<int> &a, const vector<int> &b)
+// Function to write CSV data to a file
+void writeCSV(const string &filename, float cf)
+{
+    ofstream file(filename, ios::out);
+
+    if (!file.is_open())
+    {
+        cerr << "Error in opening output file: " << filename << endl;
+        exit(1);
+    }
+
+    file << "Correlation Coefficient -> "
+         << cf << endl;
+    file.close();
+}
+
+float getCorrelationCoefficient(const vector<int> &a, const vector<int> &b)
 {
     int n = a.size();
     int a_plus = 0, b_plus = 0, ab_plus = 0;
@@ -54,34 +74,16 @@ float calculateCorrelationCoefficient(const vector<int> &a, const vector<int> &b
     return static_cast<float>(ab_plus) / (a_plus * b_plus);
 }
 
-void writeCorrelationCoefficient(const string &filename, float corr_coeff)
-{
-    ofstream file(filename, ios::out);
-
-    if (!file.is_open())
-    {
-        cerr << "Error in opening output file: " << filename << endl;
-        exit(1);
-    }
-
-    file << "Pearson Correlation Coefficient"
-         << "," << corr_coeff << endl;
-    file.close();
-}
-
 int main()
 {
-    string inputFileName = "correlation_input.csv";
-    string outputFileName = "correlation_output.csv";
 
-    vector<int> a = readData(inputFileName);
-    vector<int> b = readData(inputFileName);
+    vector<int> itemSet_1 = readCSV("correlation_input.csv");
+    vector<int> itemSet_2 = readCSV("correlation_input.csv");
 
-    float corr_coeff = calculateCorrelationCoefficient(a, b);
+    float cf = getCorrelationCoefficient(itemSet_1, itemSet_2);
 
-    writeCorrelationCoefficient(outputFileName, corr_coeff);
+    writeCSV("correlation_output.csv", cf);
 
-    cout << "Correlation coefficient calculated and saved in '" << outputFileName << "'." << endl;
-
+    cout << "correlation calculated correctly\n";
     return 0;
 }
