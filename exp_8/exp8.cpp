@@ -2,14 +2,17 @@
 #include <map>
 using namespace std;
 
-ifstream fin;
-double minfre;
-vector<set<string>> datatable;
-set<string> products;
-map<string, int> freq;
-double confidence;
+struct itemSet
+{
+    int pass;
+    ifstream fin;
+    double minfre;
+    vector<set<string>> datatable;
+    set<string> products;
+    map<string, int> freq;
+    double confidence;
+} item;
 
-// Function to split a string into words
 vector<string> wordsof(string str)
 {
     vector<string> tmpset;
@@ -27,14 +30,11 @@ vector<string> wordsof(string str)
         }
         i++;
     }
-
     if (tmp.size() > 0)
         tmpset.push_back(tmp);
-
     return tmpset;
 }
 
-// Function to combine a vector of strings, excluding the one at a given index
 string combine(vector<string> &arr, int miss)
 {
     string str;
@@ -45,7 +45,6 @@ string combine(vector<string> &arr, int miss)
     return str;
 }
 
-// Function to clone a set of strings
 set<string> cloneit(set<string> &arr)
 {
     set<string> dup;
@@ -54,7 +53,6 @@ set<string> cloneit(set<string> &arr)
     return dup;
 }
 
-// Generate candidate itemsets for Apriori
 set<string> apriori_gen(set<string> &sets, int k)
 {
     set<string> set2;
@@ -71,6 +69,8 @@ set<string> apriori_gen(set<string> &sets, int k)
             for (int i = 0; i < k - 1 && alleq; i++)
                 if (v1[i] != v2[i])
                     alleq = false;
+            if (!alleq)
+                continue;
 
             v1.push_back(v2[k - 1]);
             if (v1[v1.size() - 1] < v1[v1.size() - 2])
@@ -82,6 +82,7 @@ set<string> apriori_gen(set<string> &sets, int k)
                 if (sets.find(tmp) == sets.end())
                     alleq = false;
             }
+
             if (alleq)
                 set2.insert(combine(v1, -1));
         }
@@ -94,7 +95,7 @@ int countOccurences(vector<string> v)
 {
     int count = 0;
 
-    for (auto s : datatable)
+    for (auto s : item.datatable)
     {
         bool present = true;
 
@@ -114,9 +115,8 @@ int countOccurences(vector<string> v)
     return count;
 }
 
-ofstream fw1("association_output.csv", ios::out);
-
 // Generate subsets of items for association rule generation
+ofstream fw1("association_output.csv", ios::out);
 void subsets(vector<string> items, vector<string> v1, vector<string> v2, int idx)
 {
     if (idx == items.size())
@@ -129,7 +129,7 @@ void subsets(vector<string> items, vector<string> v1, vector<string> v2, int idx
 
         double conf = (((double)count1) / count2) * 100;
 
-        if (conf >= confidence)
+        if (conf >= item.confidence)
         {
             fw1 << "Association Rule: { ";
             for (auto s : v1)
@@ -167,62 +167,102 @@ void generateAssociationRules(set<string> freqItems)
     }
 }
 
-int main()
+void readCSV()
 {
-    fin.open("association_input.csv", ios::in);
+    item.fin.open("association_input.csv", ios::in);
 
-    if (!fin.is_open())
+    if (!item.fin.is_open())
     {
         cerr << "Error in opening file." << endl;
-        return 1;
+        return;
     }
 
     cout << "Enter Minimum Support (%): ";
-    cin >> minfre;
+    cin >> item.minfre;
 
     cout << "Enter Minimum Confidence (%): ";
-    cin >> confidence;
+    cin >> item.confidence;
 
     string str;
-    while (!fin.eof())
+    while (!item.fin.eof())
     {
-        getline(fin, str);
+        getline(item.fin, str);
         vector<string> arr = wordsof(str);
         set<string> tmpset;
         for (int i = 0; i < arr.size(); i++)
             tmpset.insert(arr[i]);
-        datatable.push_back(tmpset);
+        item.datatable.push_back(tmpset);
 
         for (set<string>::iterator it = tmpset.begin(); it != tmpset.end(); it++)
         {
-            products.insert(*it);
-            freq[*it]++;
+            item.products.insert(*it);
+            item.freq[*it]++;
         }
     }
-    fin.close();
+    item.fin.close();
+}
 
-    cout << "Number of transactions: " << datatable.size() << endl;
-    minfre = minfre * datatable.size() / 100;
-    cout << "Minimum Frequency Threshold: " << minfre << endl;
+// Function to write CSV data to a file
+void writeCSV(const string &filename, const vector<vector<string>> &data)
+{
+    ofstream file(filename);
+    if (!file.is_open())
+    {
+        cerr << "Error: Unable to create or open file " << filename << " for writing." << endl;
+        return;
+    }
+
+    for (const auto &row : data)
+    {
+        for (size_t i = 0; i < row.size(); ++i)
+        {
+            file << row[i];
+            if (i < row.size() - 1)
+            {
+                file << ",";
+            }
+        }
+        file << endl;
+    }
+
+    file.close();
+}
+
+queue<set<string>::iterator> generateItemset()
+{
+    // read the CSV data;
+    readCSV();
+
+    cout << "Number of transactions: " << item.datatable.size() << endl;
+    item.minfre = item.minfre * item.datatable.size() / 100;
+    cout << "Minimum Frequency Threshold: " << item.minfre << endl;
 
     queue<set<string>::iterator> q;
-    for (set<string>::iterator it = products.begin(); it != products.end(); it++)
-        if (freq[*it] < minfre)
+    for (set<string>::iterator it = item.products.begin(); it != item.products.end(); it++)
+        if (item.freq[*it] < item.minfre)
             q.push(it);
 
     while (q.size() > 0)
     {
-        products.erase(*q.front());
+        item.products.erase(*q.front());
         q.pop();
     }
 
-    int pass = 1;
-    cout << "Frequent " << pass++ << "-item set: " << endl;
-    for (set<string>::iterator it = products.begin(); it != products.end(); it++)
-        cout << "{" << *it << "} - Support: " << freq[*it] << endl;
+    cout << "Frequent " << item.pass++ << "-item set: " << endl;
+    for (set<string>::iterator it = item.products.begin(); it != item.products.end(); it++)
+        cout << "{" << *it << "} - Support: " << item.freq[*it] << endl;
+
+    return q;
+}
+
+void calculateItemset(queue<set<string>::iterator> &q)
+{
+
+    // vector<vector<string>> output;
+    // vector<string> temp;
 
     int i = 2;
-    set<string> prev = cloneit(products);
+    set<string> prev = cloneit(item.products);
 
     while (i)
     {
@@ -238,17 +278,17 @@ int main()
             vector<string> arr = wordsof(*it);
 
             int tot = 0;
-            for (int j = 0; j < datatable.size(); j++)
+            for (int j = 0; j < item.datatable.size(); j++)
             {
                 bool pres = true;
                 for (int k = 0; k < arr.size() && pres; k++)
-                    if (datatable[j].find(arr[k]) == datatable[j].end())
+                    if (item.datatable[j].find(arr[k]) == item.datatable[j].end())
                         pres = false;
                 if (pres)
                     tot++;
             }
-            if (tot >= minfre)
-                freq[*it] += tot;
+            if (tot >= item.minfre)
+                item.freq[*it] += tot;
             else
                 q.push(it);
         }
@@ -265,24 +305,41 @@ int main()
         {
             vector<string> arr = wordsof(*it);
 
-            if (freq[*it] < minfre)
+            if (item.freq[*it] < item.minfre)
                 flag = false;
         }
 
         if (cur.size() == 0)
             break;
+        // string dummy = "";
+        cout << "\nFrequent " << item.pass++ << "-item set: " << endl;
 
-        cout << "\nFrequent " << pass++ << "-item set: " << endl;
+        // dummy = "\nFrequent " + to_string(item.pass) + " -item set: ";
+        // temp.push_back(dummy);
+
         for (set<string>::iterator it = cur.begin(); it != cur.end(); it++)
-            cout << "{" << *it << "} - Support: " << freq[*it] << endl;
+        {
+            // dummy = "{" + *it + "} - Support: " + to_string(item.freq[*it]);
+            cout << "{" << *it << "} - Support: " << item.freq[*it] << endl;
+            // temp.push_back(dummy);
+        }
 
         prev = cloneit(cur);
         i++;
     }
+    // output.push_back(temp);
 
     generateAssociationRules(prev);
 
-    cout << "Association rules generated successfully." << endl;
+    // writeCSV("association_output.csv", output);
+}
 
-    return 0;
+int main()
+{
+    item.pass = 1;
+    queue<set<string>::iterator> q = generateItemset();
+
+    calculateItemset(q);
+
+    cout << "Association rules generated successfully." << endl;
 }
